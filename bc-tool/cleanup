@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# cleanup build directory..
+
+if [ $# == 0 ]; then
+	echo "--------------------------"
+	echo "1. cleanup build directory"
+	echo "2. cleanup output directory only"
+	echo "3. cleanup .stamp"
+fi
+
+echo ""
+read -p 'chose function number: ' N
+
+case $N in
+
+	1) find . `
+	`\( -name "out" -or -name "stamp" -type d \) 2>/dev/null `
+		`-exec rm -rf {} \;		
+
+	find . `
+  	`\( -name "*.txt" -or -name "DT*" -or -name "system_*" -or -name "vendor_c*" -or -name "file*" \) `
+		`-exec rm -f {} \;
+	sudo rm -rf `
+  	`odm/odm `
+		`product/product `
+  			`vendor/vendor `
+  				`system/system
+	echo -e "\033[32mBuild directory cleaned up!\033[0m" 
+	;;
+	
+	2) rm -rf out
+	echo -e "\033[32moutput directory cleaned up!\033[0m" 
+	;;
+
+	3) rm -rf stamp
+	echo -e "\033[32mstamp directory cleaned up!\033[0m"
+	;;
+
+	*) echo -e "\033[33mFunction unknown!\033[0m" 
+	;;
+esac

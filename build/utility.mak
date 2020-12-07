@@ -1,18 +1,18 @@
-# Полезные функции, которыми не стоит засорять rules.mak
+# Useful functions that are not worth clogging rules.mak
 
 #-------------------------------------------------------------------------------
-# Наложить патч $1 относительно каталога $2 с дополнительными опциями $3
+# Patch $1 against catalog $2 with additional options $3
 define APPLY.PATCH
 	@$(call SAY,$(C.HEAD)Applying patch file $(C.BOLD)$1$(C.RST))
 	patch $(if $2,-d "$2") $3 <$(if $1,"$1")
 
 endef
 
-APKTOOL = java -jar tools/apktool_2.3.4.jar
+APKTOOL = java -jar tools/apktool_2.4.0.jar
 ZIPSIGNER = java -jar tools/zipsigner-3.0.jar
 
 #-------------------------------------------------------------------------------
-# Наложить на APK $1 последовательно патчи из каталога $2
+# Apply the APK $1 consecutively patches from the catalog $2
 define APPLY.PATCH.APK
 	@$(call SAY,$(C.HEAD)Patching APK file $(C.BOLD)$1$(C.RST))
 	$(APKTOOL) decode -o $(OUT)patch-$(notdir $1) -f $1
@@ -24,16 +24,16 @@ define APPLY.PATCH.APK
 endef
 
 #-------------------------------------------------------------------------------
-# Проверить наличие файла $1, если нет - выводится ошибка
+# Check for file $1, if not, an error will be displayed
 define ASSERT.FILE
-$(call ASSERT,$(wildcard $1),$(if $(MOD),Для мода $(C.EMPH)$(MOD)$(C.ERR) н,Н)еобходим файл '$(C.BOLD)$1$(C.ERR)')
+$(call ASSERT,$(wildcard $1),$(if $(MOD),For fashion $(C.EMPH)$(MOD)$(C.ERR) н,Н)bypass file '$(C.BOLD)$1$(C.ERR)')
 endef
 
 #-------------------------------------------------------------------------------
-# Установка APK в прошивку системным приложением
-# $1 - название раздела (system, vendor, ...)
-# $2 - название файла APK (без каталога, должен лежать в ingredients/)
-# $3 - описание APK
+# Installing the APK in the firmware by the system application
+#1 - partition name (system, vendor, odm ...)
+# $2 - APK file name (without a directory, must be located in ingredients/)
+# $3 - APK description
 MOD.SYSAPK = $(eval $(call MOD.SYSAPK_,$1,$2,$3))
 
 MOD.SYSAPK.CON.system = u:object_r:system_file:s0
@@ -55,10 +55,10 @@ endef
 endef
 
 #-------------------------------------------------------------------------------
-# Установка APK в прошивку пользовательским приложением.
-# Требует наличия в прошивке модуля preinstall.
-# $1 - название файла APK (без каталога, должен лежать в ingredients/)
-# $2 - описание APK
+# Installing the APK in the firmware by the user application.
+# Requires preinstall module in the firmware.
+# $1 is the name of the APK file (without a directory, must be in/)
+# $2 - APK description
 MOD.USERAPK = $(eval $(call MOD.USERAPK_,$1,$2))
 
 define MOD.USERAPK_

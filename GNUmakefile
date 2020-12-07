@@ -1,15 +1,17 @@
 #
-# Система сборки Android прошивок
+# System of Android firmware builders
 #
 
-# Целевая платформа по умолчанию
-TARGET = x96max/beelink
-# По умолчанию выводим цветной текст
+# Target platform by default
+# TARGET = x96max/beelink
+TARGET = amlogic/device
+# By default we output colored text
 ANSI = 1
 
-# Локальный файл конфигурации сборки.
-# Индивидуален для каждого разработчика, не сохраняется в git.
+# Local assembly configuration file.
+# Individual for each developer, not saved in git.
 -include local-config.mak
 
-# Система сборки
+# Assembly system
 include build/rules.mak
+include bc-tool/clean-up.mak

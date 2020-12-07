@@ -1,29 +1,29 @@
-# Правила сборки UPDATE.ZIP для прошивки через режим Recovery
+# UPDATE.ZIP build rules for flashing through Recovery mode
 #
-# Входные переменные:
-# VARIANT  - (опционально) вариант прошивки (4G, 3G и т.п.)
-# FIRMNAME - название формируемой прошивки (не имя файла, только название)
-# UPD.PART - список разделов MMC, в которые записываются соответствующие образы
+# Input variables:
+# VARIANT - (optional) firmware option (4G, 3G, etc.)
+# FIRMNAME - name of the firmware being formed (not the file name, only the name)
+# UPD.PART - list of MMC partitions where the corresponding images are written to
 
-# Проверить, что все исходные данные заданы корректно
-$(call ASSERT,$(FIRMNAME),Название целевой прошивки должно быть задано в переменной FIRMNAME!)
-$(call ASSERT,$(PRODEV),Название устройства (ro.product.device) должно быть задано в переменной PRODEV!)
+# Check that all source data is set correctly
+$(call ASSERT,$(FIRMNAME),Target firmware name must be set in the FIRMNAME variable!)
+$(call ASSERT,$(PRODEV),The name of the device (ro.product.device) must be set in the PRODEV variable!)
 
-# Название файла
+# File name
 UPD.ZIP = $(OUT)update-$(FIRMNAME)-$(VER)-$(DEVICE)$(if $(VARIANT),_$(VARIANT)).zip
-# Конечные файлы, из которых собирается прошивка
+# The end files from which the firmware is built
 UPD.FILES = $(addprefix $(IMG.OUT),$(filter $(addsuffix .%,$(UPD.PART)),\
 	$(IMG.COPY) $(IMG.BUILD) $(addsuffix .raw,$(IMG.EXT4))))
 
-HELP.ALL += $(call HELPL,upd,Собрать UPDATE.ZIP для прошивки через Recovery)
+HELP.ALL += $(call HELPL,upd,Build UPDATE.ZIP for flashing through Recovery)
 
 .PHONY: upd
 upd: $(UPD.ZIP)
 
-# Правило сборки выходной прошивки
+# Output firmware build rule
 $(UPD.ZIP): $(UPD.FILES) | $(MOD.DEPS)
 	tools/upd-maker -n "$(FIRMNAME) $(VER)" -d "$(PRODEV)" -o $@ $^
 
-# Правило для распаковки sparse образа в raw
+# The rule for unpacking sparse image into raw
 %.PARTITION.raw: %.PARTITION
 	$(TOOLS.DIR)simg2img $< $@

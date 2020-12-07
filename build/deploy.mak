@@ -1,13 +1,13 @@
-# Каталог, куда складывается релиз
+# Catalogue where the release comes together
 DEPLOY.DIR = $(OUT)deploy/
 
-HELP.ALL += $(call HELPL,deploy,Собрать релиз в каталоге $(DEPLOY.DIR))
+HELP.ALL += $(call HELPL,deploy,Collect release in directory $(DEPLOY.DIR))
 
 DEPLOY.FILES += $(addprefix $(DEPLOY.DIR),$(notdir $(DEPLOY)))
 
 .PHONY: deploy
 deploy: $(DEPLOY.FILES) | $(DEPLOY.DIR).stamp.dir
 
-# В простейшем случае просто перемещаем файлы из $OUT в каталог релиза
+# In the simplest case, just move the files from $OUT to the release directory
 $(DEPLOY.DIR)%: $(OUT)%
 	$(call MV,$<,$@)

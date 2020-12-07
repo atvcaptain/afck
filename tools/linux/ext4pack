@@ -1,8 +1,8 @@
 #!/bin/bash
 #
-# Утилита для сборки образа ext4 из распакованной коллекции.
-# Если образ не разбирался (распакованного каталога не существует),
-# просто копирует исходный образ в конечный.
+# A utility to build an ext4 image from an unpacked collection.
+# If the image was not parsed (no unpacked directory exists),
+# just copies the original image to the final one.
 #
 
 DIR=
@@ -19,8 +19,8 @@ while test -n "$1" ; do
 		-O) ORIG="$2"; shift ;;
 		-s) SIZE="$2"; shift ;;
 		-t) TIME="$2"; shift ;;
-		-*) echo "Неизвестная опция $1"; exit 1 ;;
-		 *) echo "Непонятно назначение файла $1"; exit 1 ;;
+		-*) echo "Unknown option $1"; exit 1 ;;
+		 *) echo "Not clear file assignment $1"; exit 1 ;;
 	esac
 
 	shift
@@ -29,24 +29,24 @@ done
 test -z "$TIME" && TIME=$(date '+%s')
 
 if test -z "$SECON" -o -z "$DIR" -o -z "$OUT" ; then
-	echo "Собирает распакованный раздел ext4 обратно в файл образа"
-	echo "Запуск: $0 [опции]"
+	echo "Builds ext4 unpacked partition back to image file"
+	echo "Run: $0 [options]"
 	echo ""
-	echo "-d <каталог>        Каталог с распакованными файлами"
-	echo "-o <образ>          Задать имя выходного образа"
-	echo "-O <исходный образ> Определить размер выходного образа по размеру оригинала"
-	echo "-s <размер>         Задать напрямую размер выходного образа"
-	echo "-c <контексты>      Брать контексты безопасности из указанного файла"
-	echo "-t <время>          Устанавливать на файлах указанное время"
+	echo "-d <directory> directory with unpacked files"
+	echo "-o <image> Set output image name"
+	echo "-O <beginning image> Determine the size of the output image by the size of the original"
+	echo "-s <size> Specify directly the output image size"
+	echo "-c <context> Take security contexts from specified file"
+	echo "-t <time> Set the specified time on files"
 	echo ""
-	echo "Файл с контекстами имеет стандартный формат file_contexts."
+	echo "File with contexts has a standard file_contexts format."
 	echo ""
-	echo "Время задаётся в формате Unix time. Если время не задано, берётся текущее."
+	echo "The time is set in Unix time format. If no time is set, the current time is taken."
 	echo ""
-	echo "Если размер задаётся по исходному образу, сначала проверяется на существование"
-	echo "такого же файла с расширением .raw; если его нет, берётся размер указанного файла."
+	echo "If the size is set in the original image, it is first checked for existence"
+	echo "the same file with the extension .raw; if it is not, the size of the specified file is taken,"
 	echo ""
-	echo "Если опция -d не задана, осуществляется простое копирование -O в -o."
+	echo "If the -d option is not set, a simple -O to -o copy is made."
 	exit 1
 fi
 
@@ -55,25 +55,25 @@ function cmd() {
 	$*
 }
 
-# Путь к другим утилитам
+# The path to other utilities
 TOOLS_DIR=$(dirname $(readlink -f $0))
-# Название раздела
+# Section name
 PART=$(basename "$OUT" | cut -f 1 -d '.')
-# Файл с владельцем и правами доступа
+# File with the owner and access rights
 STATS=$(dirname "$DIR")/${PART}_statfile.txt
 
-# Проверим, был ли распакован исходный образ
+# Let's check if the original image was unpacked
 if test -n "$DIR" -a -d "$DIR" ; then
 
 	set -e
-	# Вычислим размер исходной файловой системы
+	# Let's calculate the size of the original file system
 	if test -z "$SIZE" ; then
 		if test -e "${ORIG}.raw" ; then
 			SIZE=$(stat -c "%s" "${ORIG}.raw")
 		elif test -e "$ORIG" ; then
 			SIZE=$(stat -c "%s" "$ORIG")
 		else
-			echo "$0: файл $ORIG не существует"
+			echo "$0: the $ORIG file does not exist"
 			exit 1
 		fi
 	fi
@@ -86,11 +86,11 @@ fi
 
 if test -e "$ORIG" ; then
 	set -e
-	# Копируем исходный распакованный образ в конечный
-	# Чтобы не расходовать место на диске, просто создаём жёсткую ссылку
+	# Copy the original unpacked image into the final one
+	# To avoid wasting disk space, just create a hard link
 	ln "$ORIG" "$OUT"
 	exit 0
 fi
 
-echo "$0: нет ни распакованного, ни запакованного образа для создания $OUT"
+echo "$0: no unpacked or packed image to create $OUT"
 exit 2

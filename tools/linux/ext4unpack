@@ -1,11 +1,11 @@
 #!/bin/bash
 #
-# Утилита для распаковки образа ext4 под Linux.
+# Utility to unpack the ext4 image under Linux.
 #
-# Работает с образами файловой системы в формате raw или sparse.
+# Works with raw or sparse file system images.
 #
-# Утилита требует административных прав и перезапускает себя
-# через sudo в случае их отсутствия.
+# The utility requires administrative rights and restarts itself
+# through sudo in case of their absence.
 #
 
 IMG="$1"
@@ -13,28 +13,28 @@ OUT="$2"
 OWNER="$3"
 
 if [ -z "$OUT" ] ; then
-	echo "Распаковывает raw/sparse образ ext4 в указанный каталог"
-	echo "Запуск: $0 <образ ext4> <выходной каталог> [uid:gid]"
+	echo "Unpacks raw/sparse ext4 image into specified directory"
+	echo "Run: $0 <image ext4> <output directory> [uid:gid]"
 	exit 1
 fi
 
 if [ $(id -u) != 0 ]; then
-	# Сценарий работает только от имени администратора
+	# The script works only on behalf of an administrator
 	exec sudo "$0" "$1" "$2" $(id -u):$(id -g)
 fi
 
 set -e
 
-# Если выходного каталога не существует, создаём
+# If the output directory does not exist, we create
 test -d "$OUT" || mkdir -p "$OUT"
-# Путь к другим утилитам
+# The path to other utilities
 TOOLS_DIR=$(dirname $(readlink -f $0))
-# Название раздела
+# Section name
 PART=$(basename "$OUT")
-# Файл с сохранёнными uid/gid файлов
+# File with saved uid/gid files
 STATS=$(dirname "$OUT")/${PART}_statfile.txt
 
-# Если образ в формате sparse, сперва преобразуем в raw формат
+# If the image is in sparse format, first convert it to raw format
 read magic < <(od -Anone -N4 -tx1 "${IMG}")
 if test "$magic" == "3a ff 26 ed" ; then
 	if ! test -e "${IMG}.raw" || test "$IMG" -nt "${IMG}.raw" ; then
@@ -48,10 +48,10 @@ TMP=$(mktemp -d ext4.XXXX)
 trap "set +e; umount $TMP &>/dev/null; rmdir $TMP" EXIT
 mount -o loop "$IMG" $TMP
 
-echo "Сохраняем режимы доступа к файлам в $STATS ..."
+echo "Save access modes to files in $STATS ..."
 find $TMP | while IFS= read fn ; do
 	test "$fn" = "$TMP" && continue
-	# Удаляем базовый каталог из имени файла, добавляем префикс по имени образа
+	# Remove the base directory from the file name, add a prefix by image name
 	rfn="${PART}/${fn/$TMP\/}"
 	test -z "$rfn" && continue
 	uid_gid_mode=$(stat -c "%u %g 0%a" "$fn")
@@ -63,7 +63,7 @@ find $TMP | while IFS= read fn ; do
 	fi
 done > $STATS
 
-echo "Извлекаем файлы из $IMG ..."
+echo "Extract files from $IMG ..."
 cp -dR --preserve=mode,links,xattr $TMP/. "$OUT"/
 
 if test -n "$OWNER" ; then

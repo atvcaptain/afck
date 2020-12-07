@@ -1,15 +1,18 @@
-Из этого каталога берутся ингредиенты для приготовления конечной прошивки.
-Можно не копировать целиком, а создавать символьные ссылки на файлы/каталоги,
-хранящиеся в других местах.
+# How does the assembly system work
+Ingredients for final firmware are taken from this catalog.
+It is possible to create symbolic links to files/directories instead of copying the whole,
+stored in other places.
 
-Можно попробовать запустить скрипт get-it-all, который попытается загрузить
-некоторые из необходимых файлов из сети.
+You can try running a get-it-all script that tries to load
+some of the necessary files from the network.
 
-Lighthome.apk, DroidTvSettings.apk, HD VideoBox - из прошивки Х96Мах-Volksware v.0.2.0_by_Sasvlad.
+Lighthome.apk, DroidTvSettings.apk, HD VideoBox - from the firmware X96Mah-Volksware v.0.2.0_by_Sasvlad.
 https://4pda.ru/forum/index.php?showtopic=925461&view=findpost&p=81680160
 
-Ace Stream Engine для Android TV (версия для armv7):
+Ace Stream Engine for Android TV (version for armv7):
 http://wiki.acestream.org/wiki/index.php/Download
 
-Fry!TV с форума 4PDA:
+Fry!TV from the 4PDA forum:
 https://4pda.ru/forum/index.php?showtopic=934096
+
+Translated with www.DeepL.com/Translator (free version)

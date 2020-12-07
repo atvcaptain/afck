@@ -1,43 +1,43 @@
-# Правила сборки и разборки прошивочного образа для чипов AMLogic
+# Firmware image assembly and disassembly rules for AMLogic chips
 #
-# Входные переменные:
-# IMG.BASE - название файла базовой прошивки (файл должен находиться в ingredients/)
+# Input variables:
+# IMG.BASE - name of the base firmware file (the file must be in/)
 
-# Проверить, что все исходные данные заданы корректно
-$(call ASSERT,$(IMG.BASE),Название файла с базовой прошивкой должно быть задано в переменной IMG.BASE!)
+# Check that all source data is set correctly
+$(call ASSERT,$(IMG.BASE),The name of the file with basic firmware must be specified in the IMG.BASE variable!)
 
-# Каталог, куда распаковывается базовая прошивка
+# Directory where the basic firmware is unpacked
 IMG.IN = $(OUT)img-unpack/
-# Каталог, где будут формироваться конечные составные части прошивки (boot, system, vendor и т.п.)
+# The directory where the final firmware components (boot, system, vendor, etc.) will be formed.
 IMG.OUT = $(OUT)img-ubt/
 
-HELP.ALL += $(call HELPL,help-img,Дополнительные команды для работы с образами)
-HELP.ALL += $(call HELPL,img-unpack,Извлечь компоненты из исходного образа)
+HELP.ALL += $(call HELPL,help-img,Additional commands for working with images)
+HELP.ALL += $(call HELPL,img-unpack,extract components from original image)
 
-# Файл с конфигурацией прошивки для USB Burning Tool
+# Firmware configuration file for USB Burning Tool
 UBT.CFG = $(TARGET.DIR)image.cfg
-# Список файлов-компонентов конечной прошивки UBT, которые получаются копированием
-# Изначально предполагается, что все компоненты будут скопированы. По мере обработки
-# рецептов компоненты могут перемещаться из IMG.COPY в IMG.EXT4 (для образов ext4,
-# которые разбираются а затем собираются обратно) и IMG.BUILD (для файлов, которые
-# каким-то образом генерируются).
+# List of UBT final firmware file components that are copied
+# It is initially assumed that all components will be copied. As it is processed.
+# recipes components can move from IMG.COPY to IMG.EXT4 (for ext4 images,
+# that are parsed and then built back) and IMG.BUILD (for files that
+# are somehow generated).
 IMG.COPY = $(shell tools/aml-img-cfg "$(UBT.CFG)" files)
 
 .PHONY: img-unpack
 img-unpack: $(IMG.IN).stamp.unpack
 
-# Штамп распаковки исходного образа ставится после распаковки исходного образа :)
+# The stamp of unpacking the original image is put after unpacking the original image :)
 $(IMG.IN).stamp.unpack: ingredients/$(IMG.BASE) $(IMG.IN).stamp.dir
 	$(TOOLS.DIR)aml_image_v2_packer -d $< $(@D)
 	$(call TOUCH,$@)
 
-# Функция вызывается для компоненты базового образа в формате ext4,
-# которую нужно распаковать. Если вызвать функцию несколько раз для
-# одного и того же компонента, функция ничего не делает.
-# Аргументы:
-# $1 - название компонента, который нужно распаковать (system, vendor итд)
+# The function is called for the base image component in ext4 format,
+# that needs to be unpacked. If you call the function several times for
+# of the same component, the function does nothing.
+# Arguments:
+# $1 is the name of the component to be unpacked (system, vendor, etc.)
 #
-# Функция добавляет необходимые зависимости в переменную DEPS.
+# The function adds the necessary dependencies to the DEPS variable.
 define IMG.UNPACK.EXT4
 $(if $(filter $1.PARTITION,$(IMG.COPY)),$(eval $(call IMG.UNPACK.EXT4_,$1)))\
 $(eval DEPS := $(DEPS) $(IMG.OUT).stamp.unpack-$1)
@@ -47,7 +47,7 @@ define IMG.UNPACK.EXT4_
 IMG.EXT4 := $$(IMG.EXT4) $$(filter $1.PARTITION,$$(IMG.COPY))
 IMG.COPY := $$(filter-out $1.PARTITION,$$(IMG.COPY))
 
-# Штамп распаковки исходного образа ext4 зависит от файла образа раздела
+# The stamp of unpacking the original ext4 image depends on the partition image file
 $$(IMG.OUT).stamp.unpack-$1: $$(IMG.IN)$1.PARTITION
 	$$(call RMDIR,$$(IMG.OUT)$1)
 	$$(call MKDIR,$$(IMG.OUT)$1)
@@ -55,21 +55,21 @@ $$(IMG.OUT).stamp.unpack-$1: $$(IMG.IN)$1.PARTITION
 	$$(call TOUCH,$$(IMG.OUT)$1_contexts)
 	$$(call TOUCH,$$@)
 
-# Исходный образ ext4 зависит от штампа распаковки исходного образа
+# The original ext4 image depends on the unpacking stamp of the original image
 $$(IMG.IN)$1.PARTITION: $$(IMG.IN).stamp.unpack
 
-HELP.IMG += $$(call HELPL,clean-img-$1,Очистить распакованный образ $1)
+HELP.IMG += $$(call HELPL,clean-img-$1,Clear unpacked image $1)
 .PHONY: clean-img-$1
 clean-img-$1:
 	rm -f $$(IMG.OUT).stamp.unpack-$1 $$(IMG.OUT)$1_contexts
 	rm -rf $$(IMG.OUT)$1
 endef
 
-# Функция помечает компонент прошивки как собираемый в модах.
-# Для таких компонентов не генерируются правила его создания
-# (копированием или собиранием из "рассыпухи").
+# The function marks the firmware component as being built in mods.
+# The rules of its creation are not generated for such components
+# (by copying or collecting from "sprawl").
 #
-# $1 - название вручную собираемого компонента (_aml_dtb, bootlogo итд)
+# $1 - name of the manually built component (_aml_dtb, bootlogo etc)
 define IMG.WILL.BUILD
 $(if $(filter $1.%,$(IMG.COPY)),$(eval $(call IMG.WILL.BUILD_,$1)))
 endef

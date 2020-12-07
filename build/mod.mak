@@ -1,39 +1,40 @@
-HELP.ALL += $(call HELPL,mod,Выполнить все рецепты модификации образа)
-HELP.ALL += $(call HELPL,help-mod,Цели для наложения отдельных модификаций на прошивку)
+HELP.ALL += $(call HELPL,mod,Execute all image modification recipes)
+HELP.ALL += $(call HELPL,help-mod,Targets to apply individual modifications to the firmware)
 
-# Функция загружает рецепт мода из .mak файла.
-# Результат выполнения функции является кодом для Make, который затем интерпретируется
-# функцией eval. Поэтому работа функции производится в два этапа: на первом этапе
-# составляется *текст*, на втором этапе этот текст интерпретируется как *код*.
-# В раскрытиях, которые необходимо отложить на второй этап, следует использовать
-# двойной знак доллара $$(), чтобы на первом этапе оно превратилось в обычное
-# раскрытие $(), а уже на втором этапе раскрытие реально произошло.
+# The function downloads a fashion recipe from a .mak file.
+# The result of the function is code for Make, which is then interpreted by
+# with the eval function. This is why the function works in two stages: the first stage
+# is composed *text*, at the second stage this text is interpreted as *code*.
+# In the disclosures to be postponed to the second stage, you should use
+# double dollar sign $$(), so that in the first step it becomes a normal
+# disclosure $(), and already in the second stage the disclosure actually happened.
 define MOD.INCLUDE
-# Обнуляем переменные, которые устанавливают моды
-# Строка описания мода
+# Zero the variables that set the mods
+# Fashion description line
 HELP :=
-# Команды для установки мода
+# Commands to set the fashion
 INSTALL :=
-# По умолчанию модуль включён
+# By default, the module is enabled
 DISABLED :=
-# Многострочное описание мода для файла README
+# Multi-line fashion description for the README file
 DESC :=
 
-# Название цели вычисляем по имени каталога
+# The name of the target is calculated by the directory name
 MOD := $$(basename $$(notdir $1))
-# Переменная DIR содержит путь к каталогу мода
+# The DIR variable contains the path to the fashion catalog
 DIR := $$(dir $1)
-# Файл штампа готовности мода
-STAMP := $$(IMG.OUT).stamp.mod-$$(MOD)
-# Файлы, от которых зависит мод
+# Fashion Readiness Stamp File
+# STAMP := $$(IMG.OUT).stamp.mod-$$(MOD)
+STAMP := $$(STAMPDIR).stamp.mod-$$(MOD)
+# Files on which fashion depends
 DEPS := $$(wildcard $$(DIR)*)
-# Для упрощения, базовый каталог, куда распаковываются разделы
+# For simplicity, the base directory where partitions are unpacked
 / := $$(IMG.OUT)
 
 include $1
 
 ifeq ($$(DISABLED),)
-$$(call ASSERT,$$(INSTALL),$$(MOD): Вы должны определить команды в переменной INSTALL)
+$$(call ASSERT,$$(INSTALL),$$(MOD): You must define the commands in the INSTALL variable,)
 HELP.MOD := $$(HELP.MOD)$$(call HELPL,mod-$$(MOD),$$(HELP))
 
 INSTALL.mod-$$(MOD) := $$(INSTALL)
@@ -44,8 +45,8 @@ DESC.mod-$$(MOD) := $$(DESC)
 .PHONY: mod-$$(MOD)
 mod-$$(MOD): $$(STAMP.mod-$$(MOD))
 
-# В командах нельзя использовать переменные, определённые выше,
-# т.к. они интерпретируются непосредственно во время eval.
+# Variables defined above cannot be used in commands,
+# because they are interpreted directly during eval.
 $$(STAMP.mod-$$(MOD)): $$(DEPS)
 	$$(call MKDIR,$$(@D))
 	$$(INSTALL.mod-$(basename $(notdir $1)))
@@ -56,7 +57,8 @@ MOD.ALL := $$(MOD.ALL) $$(MOD)
 endif
 endef
 
-# Загрузим все рецепты (патчи, дополнения и т.п.), которые есть для нашей платформы
+
+# Download all the recipes (patches, additions, etc.) that are available for our platform
 $(foreach _,$(sort $(wildcard $(TARGET.DIR)*/*.mak)),$(eval $(call MOD.INCLUDE,$_)))
 
 .PHONY: mod help-mod mod-help mod-doc
@@ -80,7 +82,7 @@ define MOD.DOC.MAKE_
 $(if $(DESC.mod-$1),  $(DESC.mod-$1))
 endef
 
-# Замена в докуметнации специальных тегов на значения переменных
+# Replacing special tags with variable values in documentations
 MOD.SEDREPL = -e 's/@FIRMNAME@/$(FIRMNAME)/g' \
 	      -e 's/@VER@/$(VER)/g' \
 	      -e 's/@DEVICE@/$(DEVICE)/g' \
@@ -90,3 +92,4 @@ $(MOD.DOC): $(MAKEFILE_LIST)
 	sed $(TARGET.DIR)/README-head.md $(MOD.SEDREPL) >$@
 	@$(call SAY,$(call MOD.DOC.MAKE)) | sed $(MOD.SEDREPL) >>$@
 	sed $(TARGET.DIR)/README-tail.md $(MOD.SEDREPL) >>$@
+

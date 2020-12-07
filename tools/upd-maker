@@ -1,23 +1,23 @@
 #!/bin/bash
 #
-# Утилита для создания пакетов обновления прошивки через Recovery
+# Utility for creating firmware update packages through Recovery
 #
-# Запуск: upd-maker -n <название> -d <ro.product.device> -o <update.zip> [образы разделов...]
+# Run: upd-maker -n <name> -d <ro.product.device> -o <update.zip> [partition images...]
 #
-# <название> задаёт название, которое будет отображаться во время
-# обновления прошивки (название пакета обновления).
+# <title> defines the name to be displayed during the
+# firmware update (service pack name).
 #
-# <ro.product.device> задаёт имя аппаратной платформы, для которой
-# предназначен этот пакет. На текущий момент проверка названия платформы
-# отключена, но это может измениться.
+# <ro.product.device> sets the name of the hardware platform for which
+# designed for this package. At the moment, check the platform name
+# is off, but that may change.
 #
-# Название файла (без расширения) с образом раздела должно быть
-# таким же, как название устройства /dev/block/*. Единственное исключение -
-# раздел _aml_dtb, который записывается в /dev/dtb.
+# The name of the file (without extension) with the partition image must be
+# the same as the device name /dev/block/*. The only exception is
+# the _aml_dtb section which is written to /dev/dtb.
 #
-# Образ раздела должен быть ровно в том виде, в котором он записывается
-# в раздел! В частности, sparse ext4 образы должны быть быть
-# предварительно распакованы (например, утилитой simg2img)
+# The image of the partition must be exactly as it is written
+# to the section! In particular, the sparse ext4 images must be
+# previously unpacked (e.g. with the simg2img utility)
 #
 
 NAME=
@@ -38,7 +38,7 @@ while test -n "$1" ; do
 		-fs) CMD_START=`cat $2`; shift ;;
 		-fe) CMD_END=`cat $2`; shift ;;
 		 -s) SCRIPT="$2"; shift ;;
-		 -*) echo "Неизвестная опция $1"; exit 1 ;;
+		 -*) echo "Unknown option $1"; exit 1 ;;
 		  *) break ;;
 	esac
 	shift
@@ -46,15 +46,15 @@ done
 
 FILES=$*
 if test -z "$UPD" ; then
-	echo "Запуск: upd-maker [опции] -o update.zip [образы разделов...]"
+	echo "Запуск: upd-maker [options] -o update.zip [partition images...]"
 	echo ""
-	echo "-n <название>   Название пакета обновления (отображается при установке)"
-	echo "-d <устройство> Название целевой платформы (getprop ro.product.device)"
-	echo "-o <update.zip> Выходной файл"
-	echo "-cs <команда>   Добавить команды до прошивки"
-	echo "-ce <команда>   Добавить команды после прошивки"
-	echo "-fs <файл>      Вставить команды из файла до прошивки"
-	echo "-fe <файл>      Вставить команды из файла после прошивки"
+	echo "-n <name> Service pack name (displayed during installation)"
+	echo "-d <d device> Target platform name (getprop ro.product.device)"
+	echo "-o <update.zip> Output file"
+	echo "-cs <command> Add commands to firmware"
+	echo "-ce <command> Add commands after flashing"
+	echo "-fs <file> Paste commands from file to firmware"
+	echo "-fe <file> Paste commands from file after flashing"
 	exit 1
 fi
 
@@ -64,7 +64,7 @@ UPD_SCR="$UPD_DIR/META-INF/com/google/android/updater-script"
 
 set -e
 
-echo "Создаём сценарий обновления ..."
+echo "We create an update script ..."
 rm -rf "$UPD_DIR"
 mkdir -p "$UPD_DIR"
 unzip -q "$DIR/upd-maker-template.zip" -d "$UPD_DIR"
@@ -129,13 +129,13 @@ fi
 test -n "$CMD_END" && echo -e "$CMD_END" >> "$UPD_SCR"
 test -z "$SCRIPT" && echo "ui_print \"Success!\"" >> "$UPD_SCR"
 
-echo "Создание промежуточного архива ..."
+echo "Creating an intermediate archive ..."
 rm -f "${UPD}~"
 (cd "$UPD_DIR"; zip -qr "${UPD}~" .)
 rm -rf "$UPD_DIR"
 
-echo "Подписываем архив тестовым ключом ..."
+echo "We sign the archive with a test key ..."
 java -jar "$DIR/zipsigner-3.0.jar" "${UPD}~" "${UPD}"
 rm -f "${UPD}~"
 
-echo "Готово"
+echo "Done"

@@ -1,6 +1,6 @@
-# Раскраска текстового вывода
+# Text output coloring
 
-# ANSI цвета для раскрашивания вывода на терминал
+# ANSI colors for coloring terminal output
 ifeq ($(ANSI),1)
 C.RST      = [0m
 C.WHITE    = [1;37m
@@ -21,15 +21,15 @@ C.RED      = [0;31m
 C.BLACK    = [0;30m
 endif
 
-# Цветовая палитра - используйте их вместо прямой ссылки на цвета
+# Color palette - use them instead of direct reference to colors
 
-# Разделители
+# Dividers
 C.SEP = $(C.DGRAY)
-# Заголовки
+# Titles
 C.HEAD = $(C.LGREEN)
-# "Подчёркнутый" текст
+# "Underlined" text
 C.EMPH = $(C.LBLUE)
-# "Выделенный" текст
+# "Highlighted" text
 C.BOLD = $(C.WHITE)
-# Текст сообщения об ошибке
+# The text of the error message
 C.ERR = $(C.LRED)

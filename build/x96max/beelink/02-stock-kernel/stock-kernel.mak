@@ -1,5 +1,5 @@
 #
-# Замена ядра и модулей в прошивке Билинка на стоковые
+# Replacing the kernel and modules in the firmware Bilink for the drain
 #
 
 BOOT_IMG = ingredients/x96max-stock-boot-$(VARIANT).img.lzma
@@ -11,10 +11,10 @@ HELP = Замена ядра и драйверов на стоковые
 
 $(call IMG.UNPACK.EXT4,vendor)
 
-# Сами предоставим раздел boot
+# We'll provide the boot section ourselves
 $(call IMG.WILL.BUILD,boot)
 
-# Правило для копирования ядра
+# The rule to copy the kernel
 $(IMG.OUT)boot.PARTITION: $(BOOT_IMG) | $(IMG.OUT).stamp.dir
 	lzma -d $< -c >$@
 
@@ -23,8 +23,8 @@ define INSTALL
 	tar xf $(BOOT_TAR) --lzma -C $/vendor/lib/modules/
 endef
 
-define DESC
-В прошивку установлено стоковое ядро со всеми преимуществами и недостатками:
-* Работают часы на передней панели
-* Плохое качество воспроизведения черезстрочного видео без libamcodec
+DESC
+The firmware has a drain core with all its advantages and disadvantages:
+* The clock on the front panel is running
+* Poor quality playback of line video without libamcodec
 endef

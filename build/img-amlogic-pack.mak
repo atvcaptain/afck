@@ -1,53 +1,53 @@
-# Правила сборки прошивочного образа для USB Burning Tool
+# Firmware image assembly rules for USB Burning Tool
 #
-# Входные переменные:
-# VARIANT  - (опционально) вариант прошивки (4G, 3G и т.п.)
-# FIRMNAME - название формируемой прошивки (не имя файла, только название)
+# Input variables:
+# VARIANT - (optional) firmware option (4G, 3G, etc.)
+# FIRMNAME - name of the firmware being formed (not the file name, only the name)
 
-# Проверить, что все исходные данные заданы корректно
-$(call ASSERT,$(FIRMNAME),Название целевой прошивки должно быть задано в переменной FIRMNAME!)
+# Check that all source data is set correctly
+$(call ASSERT,$(FIRMNAME),Target firmware name must be set in the FIRMNAME variable!)
 
-# Генерируемый образ для USB Burning Tool
+# Generated image for USB Burning Tool
 UBT.IMG = $(OUT)$(FIRMNAME)-$(VER)-$(DEVICE)$(if $(VARIANT),_$(VARIANT)).img
-# Конечные файлы, из которых собирается прошивка
+# The end files from which the firmware is built
 UBT.FILES = $(addprefix $(IMG.OUT),$(IMG.COPY) $(IMG.EXT4) $(IMG.BUILD))
 
-HELP.ALL += $(call HELPL,ubt,Собрать прошивку в формате AmLogic USB Burning Tool)
-HELP.ALL += $(call HELPL,help-ubt,Вывести список отдельно собираемых компонент для UBT)
+HELP.ALL += $(call HELPL,ubt,Build firmware in AmLogic USB Burning Tool format)
+HELP.ALL += $(call HELPL,help-ubt,display a list of separately assembled components for UBT)
 
-HELP.UBT += $(call HELPL,ubt-img,Собрать все образы$(COMMA) из которых собирается прошивка)
+HELP.UBT += $(call HELPL,ubt-img,Collect all images$(COMMA) from which the firmware is collected)
 
 .PHONY: ubt ubt-img
 ubt: $(UBT.IMG)
 ubt-img: $(UBT.FILES)
 
-# Правило сборки выходной прошивки
+# Output firmware build rule
 $(UBT.IMG): $(UBT.CFG) $(UBT.FILES)
 	$(TOOLS.DIR)aml_image_v2_packer -r $< $(IMG.OUT) $@
 
-# Чтобы сделать образы разделов, нужно сначало наложить моды
+# To make images of partitions, you must first overlay the mods
 $(UBT.FILES): $(MOD.DEPS)
 
-# Правила для файлов прошивки, не требующих модификации (прямое копирование)
-# $1 - название файла компонента прошивки
-# $2 - (опционально) название исходного файла компонента
+# Rules for firmware files that do not require modification (direct copy)
+#1 - file name of the firmware component
+# $2 - (optionally) the name of the component source file
 define IMG.PACK.COPY
-# Файл в выходном каталоге зависит от файла во входном каталоге
+# The file in the output directory depends on the file in the input directory
 $$(IMG.OUT)$1: $$(if $2,$2,$$(IMG.IN)$1)
 	$$(call CP,$$<,$$@)
 
-# Наличие файла во входном каталоге зависит от штампа распаковки исходного образа
+# The presence of a file in the input directory depends on the unpacking stamp of the original image
 $$(IMG.IN)$1: $$(IMG.IN).stamp.unpack
 
 endef
 
-# Правила для сборки образа ext4
+# Rules for building the ext4 image
 define IMG.PACK.EXT4
 .PHONY: ubt-$(basename $1)
 ubt-$(basename $1): $$(IMG.OUT)$1
-HELP.UBT += $$(call HELPL,ubt-$(basename $1),Собрать $$(IMG.OUT)$1)
+HELP.UBT += $$(call HELPL,ubt-$(basename $1),Collect $$(IMG.OUT)$1)
 
-# Чтобы получить конечный образ ext4, надо запаковать распакованный образ
+# To get the final ext4 image, you need to pack the unpacked image
 $$(IMG.OUT)$1: $$(IMG.OUT)$(basename $1)_contexts.all $$(IMG.OUT).stamp.unpack-$(basename $1)
 	$$(TOOLS.DIR)ext4pack -d $$(IMG.OUT)$(basename $1) -o $$@ -c $$< \
 	$$(if $$(EXT4.SIZE.$(basename $1)),-s $$(EXT4.SIZE.$(basename $1)),-O $$(IMG.IN)$1)
@@ -59,11 +59,11 @@ $$(FILE_CONTEXTS.$(basename $1)): $$(IMG.OUT).stamp.unpack-$(basename $1) $(MOD.
 
 endef
 
-# Файлы из IMG.COPY напрямую копируются из исходного распакованного образа
+# Files from IMG.COPY are directly copied from the original unpacked image
 $(foreach _,$(IMG.COPY),$(eval $(call IMG.PACK.COPY,$_)))
-# Файлы из IMG.EXT4 запаковываются из распакованного каталога
+# Files from IMG.EXT4 are packed from the unpacked directory
 $(foreach _,$(IMG.EXT4),$(eval $(call IMG.PACK.EXT4,$_)))
-# Файлы из IMG.BUILD собираются по правилам в самих модах
+# Files from IMG.BUILD are collected by the rules in the mods themselves
 
 .PHONY: help-ubt
 help-ubt:

@@ -1,1 +1,1 @@
-# Правила обработки Android прошивок
+# Firmware processing rules for Android

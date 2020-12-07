@@ -1,0 +1,103 @@
+#!/bin/bash
+
+#----------------------------------------------------#
+# create an android sparse_image using a new method! #
+#------------------support AOSP-9/10-----------------#
+#----------------------------------------------------#
+
+PART=odm
+OUT=${PART}.PARTITION
+TIME=$(date +"%s")
+BLOCKSIZE=4096
+SLC=file_contexts
+SLCB=file_contexts.bin
+
+ls $PART >/dev/null
+if [ $? -ne 0 ]; then
+	echo "$PART source folder does not exist"
+	echo "please copy your $PART source folder to $PWD"
+	exit 1
+else
+	echo "check source folder..."
+	echo "ok"
+fi
+
+diff \
+../system/system/system/etc/selinux/plat_and_mapping_sepolicy.cil.sha256 \
+odm/etc/selinux/precompiled_sepolicy.plat_and_mapping.sha256 >/dev/null
+if [ $? -ne 0 ]; then
+	echo -e "sepolicy sha256sum: don't match,`
+	` \033[1m\033[33mplease apply mod-sepolicy!\033[0m"
+	exit 1
+fi
+
+declare DIR=$PART/lost+found
+for directory in $DIR; do
+	if [ -d $directory ]; then 
+	echo -e " \nremove $DIR" && rm -r $DIR
+else
+	echo -e " \n$DIR is already removed!"
+	fi
+done
+
+if [ -d out ]; then
+	echo "cleanup previous build"
+	sudo rm -rf out
+else
+	echo "previous build doesn't exist"
+fi
+
+if test -e ../DT; then
+	echo -e " \ndtb check ok!"
+else
+hexdump=$(hexdump ../DTB | grep '0dd0 edfe' | wc -l)
+	case $hexdump in
+		1)
+			echo -e " \nsingle-dtb detected..."
+			cp ../DTB ../DT
+			;;
+		[2-9]|15)
+			echo -e " \nmulti-dtb detected..."
+			dd if=../DTB skip=1 bs=2048 > ../DT && sync
+			;;
+		*)
+			echo -e " \ngziped-dtb detected..."
+			mv ../DTB ../DTB.gz; gzip -d ../DTB
+			dd if=../DTB skip=1 bs=2048 > ../DT && sync
+			;;
+	esac
+fi
+
+if [ $? -eq 0 ]; then
+	echo "calculate IMG size"
+	FILESIZE=$(fdtget ../DT /partitions/$PART size | sed 's/0 //')
+	SIZE=$((FILESIZE / BLOCKSIZE))
+	echo "size: $SIZE"
+else
+	echo "unsupported dtb format!"
+	exit 1
+fi
+
+echo -e " \nbuilding..."
+mkdir out
+
+echo -e " \ncreate ext4 fs..."
+echo "#################"
+dd if=/dev/zero of=out/$OUT bs=$BLOCKSIZE count=$SIZE && { sync; contrib/mke2fs -t ext4 out/$OUT; } 
+
+echo "set android_sparse flag for e2fsdroid"
+echo "#################"
+yes '' | sudo contrib/mke2fs -O ^has_journal -L $PART -m 0 -E android_sparse -t ext4 -b $BLOCKSIZE out/$OUT $SIZE
+
+echo "compile $SLCB"
+cat selinux/*contexts > out/$SLC && { contrib/sefcontext_compile -o out/$SLCB out/$SLC; sync; }
+
+echo -e " \ncreate a sparse img..."
+echo "##################"
+sudo contrib/e2fsdroid -T $TIME -B out/$PART.map -S out/$SLCB -f $PART -a /$PART out/$OUT
+
+if ([ $? == 0 ] && [ -s out/$OUT ]); then
+	echo -e " \n\033[1m\033[32mbuild $OUT successful!\033[0m"
+else
+	exit 1 	
+fi

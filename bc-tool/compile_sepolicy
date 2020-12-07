@@ -1,0 +1,50 @@
+#!/bin/bash
+
+# compile sepolicy 
+
+secilc=system/`
+	`contrib/secilc
+
+system=system/system/system`
+	`/etc/selinux
+
+vendor=vendor/vendor`
+	`/etc/selinux
+
+odm=odm/odm`
+	`/etc/selinux
+
+version=$system/mapping
+
+shasum=$(cd $system; ls *.sha256)
+for sha256 in $(cat $system/*.sha256); do
+	diff <(echo "$sha256") <(echo $(cat $odm/*.sha256))
+done
+
+if [ $? -eq 0 ]; then 
+	echo "sha256sum: ok"
+	echo "sepolicy binary doesn't have to be replaced!"
+	exit 0
+else
+	echo -e " \ncompile sepolicy..."; rm -f $odm/precompiled_sepolicy    	
+	BSP=(
+	  $secilc
+	   '-m -M true -G -N -c 30 -o'
+	       precompiled_sepolicy
+	       $system/plat_sepolicy.cil
+	       $version/$(cat $vendor/plat_sepolicy_vers.txt).cil
+	       $([ -f $vendor/vendor_sepolicy.cil ] \
+	       && \
+	       echo $vendor/vendor_sepolicy.cil \
+	     $vendor/plat_pub_versioned.cil)
+	); ${BSP[@]}; wait 
+	mv precompiled_sepolicy $odm
+fi
+
+echo -e " \nnew sha256sum:"
+cat \
+$system/plat_sepolicy.cil $version/$(cat $vendor/plat_sepolicy_vers.txt).cil \
+| sha256sum | cut -d' ' -f1 |
+
+tee $system/$shasum $odm/precompiled_sepolicy.plat_and_mapping.sha256
+echo -e "\033[32mdone!\033[0m"

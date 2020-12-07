@@ -1,116 +1,117 @@
 # upd-maker
 
-Это простая утилита для создания обновлений в формате Android Recovery (update*.zip). Можно создавать как простые обновления (состоящие из образов разделов, которые просто записываются в /dev/block/xxx), так и продвинутые, используя собственноручно написанный скрипт.
+This is a simple utility for creating updates in Android Recovery (update*.zip) format. You can create both simple updates (consisting of partition images, which are simply written in /dev/block/xxxx), and advanced, using a handwritten script.
 
-Главной особенностью утилиты является использование Unix Shell, встроенного в любой Recovery, для выполнения всех операций. Это утилита для тех, кого тошнит от ограниченности 'Edify' (интерпретатора 'update-binary'). Такое решение не только позволяет создавать более развитые сценарии, но и существенно сократить размер архива (это особенно заметно для небольших обновлений).
+The main feature of the utility is the use of Unix Shell, built into any Recovery, to perform all operations. It is a utility for those who are sick of the limitations of 'Edify' (the 'update-binary' interpreter). This solution not only allows you to create more advanced scripts, but also significantly reduces the size of the archive (this is especially noticeable for smaller updates).
 
-В состав утилиты входят следующие файлы:
+The following files are part of the utility:
 
-* `upd-maker` - Собственно, файл, который Вы запускаете.
-* `upd-maker-template.zip` - Шаблон архива обновления.
-* `zipsigner-3.0.jar` - Утилита для подписывания архивов обновлений, взята из Magisk:
+* `upd-maker` - Actually, the file you run.
+* `upd-maker-template.zip` - Template of the update archive.
+* `zipsigner-3.0.jar` - Utility for signing update archives, taken from Magisk:
     https://github.com/topjohnwu/Magisk
 
-Их можно расположить в любом удобном месте, upd-maker будет искать остальные файлы в том же каталоге, куда он установлен.
+They can be located at any convenient location, and the upd-maker will search for other files in the same directory where it is installed.
 
-## Базовое использование
+## Basic use
 
-Утилита upd-maker может быть использована для создания готовых обновлений разделов Android. В этом случае утилита сама сгенерирует базовый сценарий обновления updater-script. Для такого использования командная строка может выглядеть как-то так:
+Utility upd-maker can be used to create ready-made updates of Android partitions. In this case, the utility itself will generate a basic updater-script update script. For such use, the command line may look something like this:
 
 ```
-upd-maker -n "Super Update from Vasya Pupkin" -o update-pupkin.zip \
+upd-maker -n "Super Update from Vasya Pupkin" -o update-pupkin.zip \.
 	system.PARTITION.raw vendor.PARTITION.raw
 ```
 
-или, например, так:
+or, for example, so:
 
 ```
 upd-maker -n "TWRP installer" -o update-TWRP-3.4.5.zip recovery.PARTITION
 ```
 
-Следует иметь в виду, что файлы образов должны подаваться ровно в том виде, в котором они записываются в /dev/block/xxx, то есть, если раздел упакован, например, алгоритмом ext4 sparse или brotli, их необходимо предварительно распаковать. С уменьшением размера образа прекрасно справится утилита zip.
+Keep in mind that image files should be filed exactly as they are written in /dev/block/xxxx, i.e. if the partition is packed with, for example, the ext4 sparse or brotli algorithm, they should be unpacked beforehand. The zip utility will do a great job of reducing the image size.
 
-Название файла должно совпадать с названием блочного устройства, т.е. test.PARTITION будет записан в раздел /dev/block/test и так далее. Расширение файла не имеет значения.
+The file name must match the name of the block device, i.e. test.PARTITION will be written to /dev/block/test and so on. The file extension is irrelevant.
 
-## Продвинутое использование
+## Advanced use
 
-Утилита также позволяет использовать полностью написанные пользователем сценарии обновления. В этом случае используется опция -s чтобы указать имя файла сценария. Все опции, использующиеся при автогенерации сценария (-n, -d, -cs, -ce) также будут иметь эффект, однако файлы и каталоги, заданные с командной строки, будут просто записаны в корневой каталог архива. Например:
+The utility also allows you to use fully user-written update scripts. In this case the -s option is used to specify the name of the script file. All options used for script autogeneration (-n, -d, -cs, -ce) will also have an effect, but files and directories defined from the command line will simply be written to the root directory of the archive. For example:
 
 ```
-upd-maker -o install-supersu-2.82.zip -s supersu-installer \
-	files/su files/99SuperSUDaemon files/SuperSU.apk \
+upd-maker -o install-supersu-2.82.zip -s supersu-installer \.
+	files/su files/99SuperSUDaemon files/SuperSU.apk \.
 	files/system files/vendor
 ```
 
-В примере выше files/system и files/vendor - это подкаталоги со своим содержимым. После создания архива он будет выглядеть следующим образом:
+In the example above files/system and files/vendor are subdirectories with their contents. Once an archive is created, it will look like this:
 
 ```
- Length   Method    Size  Cmpr    Date    Time   CRC-32   Name
---------  ------  ------- ---- ---------- ----- --------  ----
-   75352  Defl:N    37077  51% 02-29-2008 05:33 90352177  su
-      55  Defl:N       44  20% 02-29-2008 05:33 0d67885f  99SuperSUDaemon
- 6225270  Defl:N  2862078  54% 02-29-2008 05:33 54f88e45  SuperSU.apk
-     117  Defl:N       68  42% 02-29-2008 05:33 7048067f  system/init.d.perm
-     157  Defl:N       98  38% 02-29-2008 05:33 bc2f60af  system/run-init.d
-     300  Defl:N      118  61% 02-29-2008 05:33 8ee51b49  system/supersu.perm
-     250  Defl:N      102  59% 02-29-2008 05:33 3c82573a  vendor/init.d.perm
-     168  Defl:N      119  29% 02-29-2008 05:33 b8ce3141  vendor/init.d.rc
-     187  Defl:N      108  42% 02-29-2008 05:33 6a6ef29c  vendor/run-init.d
-     308  Defl:N      129  58% 02-29-2008 05:33 12473aee  vendor/supersu.perm
+ Length Method Size Cmpr Date Time CRC-32 Name
+-------- ------ ------- ---- ---------- ----- -------- ----
+   75352 Defl:N 37077 51% 02-29-2008 05:33 90352177 su
+      55 Defl:N 44 20% 02-29-2008 05:33 0d67885f 99SuperSUDaemon
+ 6225270 Defl:N 2862078 54% 02-29-2008 05:33 54f88e45 SuperSU.apk
+     117 Defl:N 68 42% 02-29-2008 05:33 7048067f system/init.d.perm
+     157 Defl:N 98 38% 02-29-2008 05:33 bc2f60af system/run-init.d
+     300 Defl:N 118 61% 02-29-2008 05:33 8ee51b49 system/supersu.perm
+     250 Defl:N 102 59% 02-29-2008 05:33 3c82573a vendor/init.d.perm
+     168 Defl:N 119 29% 02-29-2008 05:33 b8ce3141 vendor/init.d.rc
+     187 Defl:N 108 42% 02-29-2008 05:33 6a6ef29c vendor/run-init.d
+     308 Defl:N 129 58% 02-29-2008 05:33 12473aee vendor/supersu.perm
 ```
 
-## Встроенные функции
+## Built-in features
 
-При запуске обновления, утилита Recovery (или TWRP) запускает сценарий META-INF/com/google/android/update-binary. Это SH-сценарий, который производит начальную инициализацию рабочего окружения, затем запускает пользовательский сценарий META-INF/com/google/android/updater-script.
+When you start an update, the Recovery utility (or TWRP) runs the META-INF/com/google/android/update-binary script. This is an SH script, which performs the initial initialization of the desktop environment, then runs a custom script META-INF/com/google/android/updater-script.
 
-При этом пользовательскому сценарию доступны следующие дополнительные функции:
+The following additional functions are available for the user scenario:
 
-* `ui_print`
-    аналогично функции ui_print в языке Edify, печатает строку в графическую консоль программы. Пример: ui_print "Привет!"
+* `ui_print'.
+    Similar to the function ui_print in the language Edify, prints a line in the graphical console of the program. Example: ui_print "Hello!
 
-* `progress <позиция> <длительность>`
-    Устанавливает индикатор прогресса в указанную позицию (дробное число от 0 до 1) с ожидаемой длительностью операции.
+* `progress <position> <duration> `.
+    Sets the progress indicator to the specified position (fractional number from 0 to 1) with expected duration of the operation.
 
-* `set_progress <позиция>`
-    Просто устанавливает индикатор прогресса в указанную позицию.
+* `set_progress <position>`.
+    Simply set the progress indicator to the specified position.
 
-* `package_extract_file <путь в архиве> <путь в файловой системе>`
-    Распаковывает указанный файл из архива. Второй аргумент может быть как полным именем файла (в таком случае, можно распаковывать одновременно с переименовыванием), так и именем каталога, в этом случае используется исходное имя файла.
+* `package_extract_file <package in archive> <package in file system> `.
+    Extracts the specified file from the archive. The second argument can be either the full name of the file (in this case, it can be unpacked simultaneously with renaming) or the directory name, in this case the original file name is used.
 
-* `package_extract_folder <путь в архиве> <путь в файловой системе>`
-    Распаковать подкаталог со всем содержимым.
+* `package_extract_folder <path in archive> <path in file system>`.
+    Extract a subdirectory with all content.
 
-* `set_perm <uid> <gid> <файл> [<файл>...]`
-    Позволяет установить владельца, группу и права доступа к указанному файлу или файлам. Пример: set_perm root root 0644 /system/etc/hello.txt
+* `set_perm <uid> <gid> <file> [<file>...]`.
+    Allows you to set the owner, group and access rights of the specified file or files. Example: set_perm root 0644 /system/etc/hello.txt
 
-* `perm <имя файла.perm>`
-    Установить владельца, группу, права доступа и контекст SElinux для набора файлов, согласно правилам, заданным в указанном файле. Файл содержит строки, по одной на каждый файл, в следующем формате:
+Translated with www.DeepL.com/Translator (free version)
+
+* `perm <file name.perm>`.
+    Set the owner, group, access rights and SElinux context for the set of files according to the rules defined in the specified file. The file contains rows, one for each file, in the following format:
     ```
-    <файл> <uid> <gid> <права доступа> <контекст>
+    <file> <uid> <gid> <authorization> <context>
     ```
-    Например:
+    For example:
     ```
-    /system/etc/init.d     0 0    0755 u:object_r:system_file:s0
+    /system/etc/init.d 0 0 0755 u:object_r:system_file:s0
     /system/bin/run-init.d 0 2000 0755 u:object_r:system_file:s0
     ```
 * `stdout_to_ui_print`
-    Перенаправляет stdout на ui_print. Можно использовать в конвеерных конструкциях, типа:
+    Redirects stdout to ui_print. It can be used in conveyor constructions of the type:
     ```
     ls -la /system | stdout_to_ui_print.
     ```
 
-* `wipe_cache`
-    Очистить кэш Android после успешной установки обновления.
-    В современных версиях Android это бесполезная операция: форматируется раздел /cache, который содержит практически один мусор.
+* `wipe_cache *
+    Clear the Android cache after the successful installation of the update.
+    In modern versions of Android is a useless operation: formatted section /cache, which contains almost one garbage.
 
-* `clear_display`
-    Очистка графической консоли
+* `clear_display'.
+    Graphics console cleaning
 
-* `enable_reboot`
-    Разрешать перезагрузку во время установки (полезно для отладки пакетов, которые могут подвиснуть во время работы).
+* `enable_reboot
+    Allow reboot during installation (useful for debugging packages that may hang during operation).
 
-* `sed_patch <файл> <команда> [<команда>...]`
-    Выполняет указанные команды sed над указанным файлом. Результирующий файл замещает исходный, если содержимое изменилось. Пример:
+* `sed_patch <file> <command> [<command>...]`.
+    Executes the specified sed commands over the specified file. The resulting file replaces the original file if the content has changed. Example:
     ```
     sed_patch /system/build.prop '/^#adb/,/^service.adb/d'
-    ```

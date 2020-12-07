@@ -1,20 +1,20 @@
-HELP = Очистка прошивка Beelink от мусора
+HELP = Garbage Cleaning Beelink firmware
 
 $(call IMG.UNPACK.EXT4,system)
 $(call IMG.UNPACK.EXT4,vendor)
 
-# Разъяснение по удалению APK-шек:
-#  * AppMarket какое-то неработающее дерьмо
-#  * Music он же Bee Music он же "Вы хотите выйти плеер?" -> "О да!".
-#  * CompanionDeviceManager нерабочая хрень
-#    (am start-activity -a android.companiondevice.START_DISCOVERY
-#    -> в приложении com.android.companiondevicemanager произошёл сбой).
-#  * FileManager знаменитый "пчела файлы", в представлении не нуждается
-#  * WAPPushManager - что-то про WAP, у нас не телефон
-#  * FotaUpdate* - обновление кончится плохо для пользователя
-#  * NativeImagePlayer - страшненький просмотр картинок
-#  * FileBrowser - заменяется на Total Commander
-#  * AppInstaller - заменяется на XAPK Installer
+# Clarification on removing APKs:
+# AppMarket some non-working shit
+# * Music a.k.a. Bee Music a.k.a. "Do you want to go out the player?" -> "Oh yes!"
+# CompanionDeviceManager non-working shit
+# (am start-activity -a android.companiondevice.START_DISCOVERY
+# -> in the application com.android.companiondevicemanager there was a failure).
+# * FileManager famous "bee files", in the representation does not need
+# WAPPushManager - something about WAP, we do not have a phone
+# FotaUpdate # - the update will end badly for the user
+# * NativeImagePlayer - scary picture viewer
+# * FileBrowser - replaced by Total Commander
+# * AppInstaller - replaced by XAPK Installer
 define INSTALL
 	tools/sed-patch -e '/preinstall Apks/$(COMMA)/^$$/d' \
 		-e '/^.HDMI IN/$(COMMA)/^$$/d' \
@@ -29,7 +29,7 @@ define INSTALL
 endef
 
 define DESC
-Из прошивки удалены ненужные приложения AppMarket, BeeMusic, Music,
+Unwanted applications removed from the firmware AppMarket, BeeMusic, Music,
 CompanionDeviceManager, FileManager, WAPPushManager, FotaUpdate,
 FotaUpdateReboot, OTAUpgrade, NativeImagePlayer, FileBrowser,
 AppInstaller.
